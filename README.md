@@ -11,7 +11,7 @@ format-env is a Go command-line utility to generate and format environment files
 ## Option 1: Donwload binary file
 ```sh
 # for macos arm64 
-wget https://github.com/cuongnbms/format-env/releases/download/v1.0.1/fenv_darwin_arm64 -O fenv
+wget https://github.com/cuongnbms/format-env/releases/download/v1.1.0/fenv_darwin_arm64 -O fenv
 sudo mv fenv /usr/local/bin/
 sudo chmod +x /usr/local/bin/fenv
 ```
