@@ -1,0 +1,8 @@
+- id: format-env
+  name: format environment files
+  description: Format staged .env files from an _template.env file
+  entry: format-env
+  language: golang
+  files: '\.env$'
+  pass_filenames: false
+  require_serial: true

@@ -11,7 +11,7 @@ format-env is a Go command-line utility to generate and format environment files
 ## Option 1: Donwload binary file
 ```sh
 # for macos arm64 
-wget https://github.com/cuongnb14/format-env/releases/download/v1.0.1/fenv_darwin_arm64 -O fenv
+wget https://github.com/cuongnbms/format-env/releases/download/v1.0.1/fenv_darwin_arm64 -O fenv
 sudo mv fenv /usr/local/bin/
 sudo chmod +x /usr/local/bin/fenv
 ```
@@ -47,6 +47,51 @@ Example
 # run format
 fenv env dev,staging,prod
 ```
+
+# Pre-commit
+
+This repository can be used as a remote hook with the
+[`pre-commit`](https://pre-commit.com) framework. Add the following config to
+the project whose environment files should be formatted:
+
+```yaml
+repos:
+  - repo: https://github.com/cuongnbms/format-env
+    rev: v1.1.0
+    hooks:
+      - id: format-env
+        args:
+          - env
+          - dev,test,prod
+```
+
+The first argument is the directory containing `_template.env`. The second is
+the comma-separated list of stages to format. Install and verify the hook with:
+
+```sh
+pre-commit install
+pre-commit run --all-files
+```
+
+When the hook changes an environment file, `pre-commit` stops the commit. Review
+the changes, stage the files again, and retry the commit.
+
+Use multiple hook entries when a project has more than one environment
+directory:
+
+```yaml
+repos:
+  - repo: https://github.com/cuongnbms/format-env
+    rev: v1.1.0
+    hooks:
+      - id: format-env
+        name: format service environment files
+        args: [services/api/env, dev,test,prod]
+      - id: format-env
+        name: format worker environment files
+        args: [services/worker/env, dev,prod]
+```
+
 # Template Syntax
 The template file should use Go’s text/template syntax. For example:
 ```

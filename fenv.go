@@ -2,21 +2,20 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 )
 
-func defaultFunc(value, fallback any) string {
-	if value == nil {
-		return fallback.(string)
+func defaultFunc(value any, fallback string) string {
+	if stringValue, ok := value.(string); ok && stringValue != "" {
+		return stringValue
 	}
-	if value == "" {
-		return fallback.(string)
-	}
-	return value.(string)
+	return fallback
 }
 
 // readConfigFile reads the key-value pairs from a .env file
@@ -58,32 +57,33 @@ func readConfigFile(filePath string) (map[string]string, error) {
 func formatEnv(envDir string, stage string) error {
 	log.Printf("using template %s/_template.env format %s/%s.env", envDir, envDir, stage)
 
-	configPath := fmt.Sprintf("%s/%s.env", envDir, stage)
-	outputPath := configPath
+	configPath := filepath.Join(envDir, stage+".env")
+	templatePath := filepath.Join(envDir, "_template.env")
 
-	templateContent, err := os.ReadFile(envDir + "/_template.env")
+	templateContent, err := os.ReadFile(templatePath)
 	if err != nil {
-		return fmt.Errorf("failed to read template file: %v", err)
+		return fmt.Errorf("failed to read template file: %w", err)
 	}
 
 	config, err := readConfigFile(configPath)
 	if err != nil {
-		return fmt.Errorf("failed to read config file: %v", err)
+		return fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	tmpl := template.Must(template.New("env").Option("missingkey=zero").Funcs(template.FuncMap{
+	tmpl, err := template.New("env").Option("missingkey=zero").Funcs(template.FuncMap{
 		"df": defaultFunc,
-	}).Parse(string(templateContent)))
-
-	outputFile, err := os.Create(outputPath)
+	}).Parse(string(templateContent))
 	if err != nil {
-		return fmt.Errorf("failed to create output file: %v", err)
+		return fmt.Errorf("failed to parse template file: %w", err)
 	}
-	defer outputFile.Close()
 
-	err = tmpl.Execute(outputFile, config)
-	if err != nil {
-		return fmt.Errorf("failed to execute template: %v", err)
+	var output bytes.Buffer
+	if err := tmpl.Execute(&output, config); err != nil {
+		return fmt.Errorf("failed to execute template: %w", err)
+	}
+
+	if err := os.WriteFile(configPath, output.Bytes(), 0644); err != nil {
+		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
 	return nil
